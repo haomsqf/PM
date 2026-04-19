@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factor Regression Analysis — Portfolio Methods</title>
+<style>
+  :root {
+    --navy:   #1a2e4a;
+    --blue:   #2c5f8a;
+    --accent: #3a8fd1;
+    --green:  #2e7d52;
+    --gold:   #b8860b;
+    --red:    #c0392b;
+    --light:  #f4f7fa;
+    --border: #d0d8e4;
+    --text:   #2c3e50;
+    --muted:  #6b7c93;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: #eef2f7;
+    color: var(--text);
+    line-height: 1.65;
+  }
+
+  header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--blue) 100%);
+    color: #fff;
+    padding: 48px 60px 36px;
+  }
+  header h1 { font-size: 2rem; font-weight: 700; letter-spacing: .5px; }
+  header p  { margin-top: 8px; opacity: .8; font-size: .95rem; }
+  .meta { display: flex; gap: 32px; margin-top: 20px; flex-wrap: wrap; }
+  .meta span {
+    background: rgba(255,255,255,.12);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: .85rem;
+    letter-spacing: .3px;
+  }
+
+  /* ── Nav ── */
+  nav {
+    background: var(--navy);
+    padding: 0 60px;
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  nav a {
+    color: rgba(255,255,255,.7);
+    text-decoration: none;
+    font-size: .82rem;
+    padding: 10px 14px;
+    border-bottom: 2px solid transparent;
+    transition: color .2s, border-color .2s;
+  }
+  nav a:hover { color: #fff; border-bottom-color: var(--accent); }
+
+  main { max-width: 1120px; margin: 0 auto; padding: 40px 24px 80px; }
+  section { margin-bottom: 56px; }
+  h2 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--navy);
+    border-left: 4px solid var(--accent);
+    padding-left: 12px;
+    margin-bottom: 18px;
+  }
+  h3 { font-size: 1rem; font-weight: 600; color: var(--blue); margin: 20px 0 8px; }
+  p  { margin-bottom: 10px; font-size: .93rem; }
+
+  /* ── Cards ── */
+  .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px,1fr)); gap: 16px; margin: 20px 0; }
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 20px 18px;
+    border-top: 4px solid var(--accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,.07);
+  }
+  .card .label { font-size: .78rem; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+  .card .value { font-size: 1.7rem; font-weight: 700; color: var(--navy); margin-top: 4px; }
+  .card .sub   { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+  .card-green { border-top-color: var(--green); }
+  .card-gold  { border-top-color: var(--gold); }
+  .card-red   { border-top-color: var(--red); }
+
+  /* ── Steps ── */
+  .steps { display: flex; flex-direction: column; gap: 12px; margin: 16px 0; }
+  .step {
+    display: flex; gap: 16px; align-items: flex-start;
+    background: #fff; border-radius: 10px; padding: 16px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,.06);
+  }
+  .step-num {
+    flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .9rem;
+  }
+  .step-body h4 { font-size: .93rem; font-weight: 600; margin-bottom: 4px; color: var(--navy); }
+  .step-body p  { font-size: .87rem; margin: 0; color: var(--text); }
+
+  /* ── Tables ── */
+  .tbl-wrap { overflow-x: auto; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+  table { width: 100%; border-collapse: collapse; background: #fff; font-size: .88rem; }
+  thead th {
+    background: var(--navy); color: #fff;
+    padding: 11px 14px; text-align: left;
+    font-weight: 600; letter-spacing: .3px; white-space: nowrap;
+  }
+  tbody tr:nth-child(even) { background: var(--light); }
+  tbody td { padding: 9px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .best { font-weight: 700; color: var(--green); }
+
+  /* ── Badges ── */
+  .badge {
+    display: inline-block; padding: 2px 9px; border-radius: 12px;
+    font-size: .76rem; font-weight: 600; letter-spacing: .3px;
+  }
+  .badge-green { background: #d4edda; color: var(--green); }
+  .badge-gold  { background: #fff3cd; color: var(--gold); }
+  .badge-red   { background: #fde8e8; color: var(--red); }
+  .badge-blue  { background: #dbeafe; color: var(--blue); }
+  .badge-grey  { background: #e9ecef; color: #555; }
+
+  /* ── Callout ── */
+  .callout {
+    display: flex; gap: 14px;
+    background: #e8f4fd; border: 1px solid #b3d7f0;
+    border-radius: 10px; padding: 16px 20px; font-size: .88rem;
+  }
+  .callout-icon { font-size: 1.4rem; flex-shrink: 0; }
+  .callout-warn { background: #fff8e1; border-color: #ffe082; }
+  .callout-success { background: #e8f5e9; border-color: #a5d6a7; }
+
+  /* ── Phase header ── */
+  .phase-header {
+    display: flex; align-items: center; gap: 14px; margin-bottom: 18px;
+  }
+  .phase-pill {
+    background: var(--accent); color: #fff;
+    border-radius: 20px; padding: 4px 16px;
+    font-size: .8rem; font-weight: 700; letter-spacing: .5px;
+    white-space: nowrap;
+  }
+  .phase-header h2 { margin-bottom: 0; }
+
+  /* ── Asset cards ── */
+  .asset-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 20px; margin-top: 16px; }
+  .asset-card { background: #fff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,.08); }
+  .asset-card .ac-header {
+    padding: 14px 20px; color: #fff;
+    font-weight: 700; font-size: .95rem; letter-spacing: .3px;
+  }
+  .ac-1 { background: linear-gradient(90deg,#1a6b3c,#2e9e5b); }
+  .ac-2 { background: linear-gradient(90deg,#1a3f6b,#2c6fad); }
+  .ac-3 { background: linear-gradient(90deg,#7a4800,#c47a1e); }
+  .ac-4 { background: linear-gradient(90deg,#6b1a1a,#b03030); }
+  .ac-5 { background: linear-gradient(90deg,#2d1a6b,#5a3aad); }
+  .asset-card .ac-body { padding: 16px 20px; }
+  .stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .stat-pill {
+    background: var(--light); border-radius: 6px;
+    padding: 5px 11px; font-size: .8rem; font-weight: 600; color: var(--navy);
+  }
+  .ac-body ul { padding-left: 18px; font-size: .86rem; }
+  .ac-body ul li { margin-bottom: 5px; }
+  .ac-body .note {
+    margin-top: 12px; padding: 10px 14px;
+    border-left: 3px solid var(--accent);
+    background: var(--light); border-radius: 0 6px 6px 0;
+    font-size: .84rem; color: var(--muted); font-style: italic;
+  }
+
+  /* ── Heatmap ── */
+  .heatmap-wrap {
+    background: #fff; border-radius: 12px; padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.07); text-align: center;
+  }
+  .heatmap-wrap img { max-width: 100%; border-radius: 6px; }
+  .heatmap-wrap figcaption { font-size: .82rem; color: var(--muted); margin-top: 10px; }
+
+  /* ── Two-column ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media(max-width:700px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* ── Spread legend ── */
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 10px 0 18px; font-size: .84rem; }
+  .legend-item { display: flex; align-items: center; gap: 7px; }
+  .swatch { width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0; }
+
+  footer {
+    text-align: center; padding: 28px;
+    font-size: .8rem; color: var(--muted); border-top: 1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Factor Regression Analysis</h1>
+  <p>Identifying five unknown assets through systematic factor decomposition — Fordham University MSQF</p>
+  <div class="meta">
+    <span>120 monthly observations</span>
+    <span>5 assets (excess returns)</span>
+    <span>28 original factors</span>
+    <span>120 constructed spread features</span>
+    <span>Quantitative Methods for Portfolio Management</span>
+  </div>
+</header>
+
+<nav>
+  <a href="#overview">Overview</a>
+  <a href="#methodology">Methodology</a>
+  <a href="#phase1">Phase 1 — Single Factor</a>
+  <a href="#phase2">Phase 2 — Full OLS</a>
+  <a href="#phase3">Phase 3 — VIF</a>
+  <a href="#phase4">Phase 4 — Feature Engineering</a>
+  <a href="#phase5">Phase 5 — Combined Model</a>
+  <a href="#characterization">Asset Characterization</a>
+  <a href="#outputs">Output Files</a>
+</nav>
+
+<main>
+
+<!-- ── EXECUTIVE SUMMARY ── -->
+<section id="overview">
+  <h2>Executive Summary</h2>
+  <p>
+    Five unknown assets are analyzed using a two-stage factor regression framework. All asset returns are expressed
+    as excess returns (asset minus a risk-free rate proxy) so that regression intercepts estimate Jensen's Alpha
+    and factor loadings reflect pure risk premia. The analysis progresses from simple single-factor screening through
+    a full multivariate model, multicollinearity diagnostics, systematic feature engineering, and finally a combined
+    regression incorporating both the original factor universe and all constructed spread features.
+  </p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="label">Assets Analyzed</div>
+      <div class="value">5</div>
+      <div class="sub">Excess returns vs risk-free rate</div>
+    </div>
+    <div class="card">
+      <div class="label">Original Factors</div>
+      <div class="value">28</div>
+      <div class="sub">27 market factors + HY-GAGG spread</div>
+    </div>
+    <div class="card">
+      <div class="label">Single-Factor Tests</div>
+      <div class="value">135</div>
+      <div class="sub">5 assets × 27 factors</div>
+    </div>
+    <div class="card card-green">
+      <div class="label">Spread Features</div>
+      <div class="value">120</div>
+      <div class="sub">Constructed from correlated pairs (|r|&nbsp;&gt;&nbsp;0.70)</div>
+    </div>
+    <div class="card card-gold">
+      <div class="label">Best Fit</div>
+      <div class="value">97.5%</div>
+      <div class="sub">Asset 5 combined R² — consistent with passive index</div>
+    </div>
+    <div class="card card-red">
+      <div class="label">Lowest Fit</div>
+      <div class="value">65.7%</div>
+      <div class="sub">Asset 3 — consistent with commodity exposure</div>
+    </div>
+  </div>
+
+  <div class="callout callout-success" style="margin-top:16px;">
+    <div class="callout-icon">&#10003;</div>
+    <div>
+      <strong>Prior characterizations hold and sharpen.</strong> Single-factor loadings established asset identities
+      that the full multivariate and combined models reinforce: a broad bond index, a growth-tilted equity portfolio,
+      a commodity/real-assets fund, a diversified credit/multi-strategy vehicle, and an inflation-protected bond index.
+      The combined model elevated Asset 2's growth tilt signal (t&#8209;stat&nbsp;=&nbsp;9.9 on US&nbsp;Growth&nbsp;−&nbsp;US&nbsp;Value)
+      and confirmed Asset 5's near-passive TIPS tracking (TIPs t&#8209;stat&nbsp;=&nbsp;22.5).
+    </div>
+  </div>
+</section>
+
+<!-- ── METHODOLOGY ── -->
+<section id="methodology">
+  <h2>Methodology</h2>
+
+  <div class="callout" style="margin-bottom:20px;">
+    <div class="callout-icon">&#128161;</div>
+    <div>
+      <strong>Why excess returns?</strong> Subtracting the risk-free rate (proxied by the Cash factor) from each
+      asset return shifts the regression intercept from a raw average return to <em>Jensen's Alpha</em> — the
+      return earned above what the factor exposures alone would predict. This mirrors the CAPM framework and
+      ensures factor betas measure pure risk premia rather than blends of risk premium and rate of return.
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>Single-Factor Screening — 135 regressions</h4>
+        <p>Each of the 5 assets is regressed separately on each of the 27 factors (plus HY‑GAGG), producing
+        one slope (beta), p-value, and R² per pair. This establishes which factors carry statistically meaningful
+        signal for each asset in isolation. Threshold: p ≤ 0.05.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>Full 28-Factor OLS — joint model per asset</h4>
+        <p>All 28 factors enter simultaneously for each asset. Factors that were significant in isolation often
+        lose significance here due to multicollinearity. The contrast between single-factor and full-model
+        p-values motivates the feature engineering step.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>VIF Diagnostics — two passes per asset</h4>
+        <p>Variance Inflation Factors are computed on (a) the single-factor-significant subset and
+        (b) the full-model-significant subset for each asset separately, flagging pairwise multicollinearity
+        at VIF &gt; 5 (warning) and VIF &gt; 10 (severe). Perfectly collinear pairs (VIF = ∞) are noted.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Feature Engineering — systematic spread construction</h4>
+        <p>For every factor pair with |correlation| &gt; 0.70 where both factors are significant in at least
+        one single-factor model and at least one degrades in the joint model, a spread feature is constructed:
+        <strong>A − B</strong> for positively correlated pairs (isolates what A captures beyond B),
+        <strong>A + B</strong> for negatively correlated pairs (combines opposing directional signals). All
+        qualifying pairs in this dataset were positively correlated, yielding 120 difference features.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <h4>Combined Model — 28 originals + 120 spreads, per asset</h4>
+        <p>All 148 features enter jointly. Significant factors are color-coded: green for original factors,
+        blue for constructed spreads. VIF and heatmaps are re-run on the full combined set to assess
+        whether spread features add explanatory power over and above the original factor universe.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── PHASE 1 ── -->
+<section id="phase1">
+  <div class="phase-header">
+    <div class="phase-pill">PHASE 1</div>
+    <h2>Single-Factor Regressions</h2>
+  </div>
+
+  <p>
+    135 univariate regressions (5 assets × 27 factors) establish each factor's standalone explanatory power.
+    Results are highlighted green where p ≤ 0.05. The five strongest factors per asset by R² are shown below;
+    full results are in <code>single_factor_regressions.xlsx</code>.
+  </p>
+
+  <div class="two-col">
+    <div>
+      <h3>Asset 1 — Top 5 by R²</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Factor</th><th class="num">Beta</th><th class="num">p-value</th><th class="num">R²</th></tr></thead>
+          <tbody>
+            <tr><td><strong>US AGG</strong></td><td class="num">0.700</td><td class="num best">1.9e-41</td><td class="num best">0.787</td></tr>
+            <tr><td>TIPs</td><td class="num">0.264</td><td class="num">1.2e-20</td><td class="num">0.522</td></tr>
+            <tr><td>US Tbill 1-3yr</td><td class="num">1.118</td><td class="num">4.4e-13</td><td class="num">0.360</td></tr>
+            <tr><td>Global AGG</td><td class="num">0.268</td><td class="num">1.6e-12</td><td class="num">0.346</td></tr>
+            <tr><td>US Muni</td><td class="num">0.414</td><td class="num">8.6e-11</td><td class="num">0.301</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.83rem;color:var(--muted);margin-top:6px;">Bond-dominant: all top factors are fixed-income.</p>
+    </div>
+    <div>
+      <h3>Asset 2 — Top 5 by R²</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Factor</th><th class="num">Beta</th><th class="num">p-value</th><th class="num">R²</th></tr></thead>
+          <tbody>
+            <tr><td><strong>US Growth</strong></td><td class="num">1.166</td><td class="num best">2.6e-55</td><td class="num best">0.876</td></tr>
+            <tr><td>S&amp;P500</td><td class="num">1.130</td><td class="num">7.3e-41</td><td class="num">0.782</td></tr>
+            <tr><td>US Mid Cap</td><td class="num">0.931</td><td class="num">8.2e-40</td><td class="num">0.773</td></tr>
+            <tr><td>US Small Cap</td><td class="num">0.810</td><td class="num">3.2e-35</td><td class="num">0.729</td></tr>
+            <tr><td>MSCI World</td><td class="num">0.994</td><td class="num">1.1e-34</td><td class="num">0.723</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.83rem;color:var(--muted);margin-top:6px;">Equity-dominant; US Growth leads with R²&nbsp;=&nbsp;0.876.</p>
+    </div>
+    <div>
+      <h3>Asset 3 — Top 5 by R²</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Factor</th><th class="num">Beta</th><th class="num">p-value</th><th class="num">R²</th></tr></thead>
+          <tbody>
+            <tr><td><strong>Commodities</strong></td><td class="num">0.978</td><td class="num best">1.4e-19</td><td class="num best">0.502</td></tr>
+            <tr><td>MSCI Canada</td><td class="num">0.775</td><td class="num">7.1e-17</td><td class="num">0.447</td></tr>
+            <tr><td>Long Short HF</td><td class="num">1.881</td><td class="num">3.1e-16</td><td class="num">0.433</td></tr>
+            <tr><td>Event Driven HF</td><td class="num">2.448</td><td class="num">9.2e-16</td><td class="num">0.423</td></tr>
+            <tr><td>MSCI EM Equity</td><td class="num">0.664</td><td class="num">6.3e-15</td><td class="num">0.404</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.83rem;color:var(--muted);margin-top:6px;">Best single-factor R² only 0.50 — harder to explain with standard factors.</p>
+    </div>
+    <div>
+      <h3>Asset 4 — Top 5 by R²</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Factor</th><th class="num">Beta</th><th class="num">p-value</th><th class="num">R²</th></tr></thead>
+          <tbody>
+            <tr><td><strong>HF FOF Div</strong></td><td class="num">0.525</td><td class="num best">2.5e-12</td><td class="num best">0.341</td></tr>
+            <tr><td>Commodities</td><td class="num">0.141</td><td class="num">5.4e-10</td><td class="num">0.279</td></tr>
+            <tr><td>Long Short HF</td><td class="num">0.271</td><td class="num">1.2e-08</td><td class="num">0.241</td></tr>
+            <tr><td>MSCI Canada</td><td class="num">0.109</td><td class="num">1.4e-08</td><td class="num">0.240</td></tr>
+            <tr><td>MSCI EM Equity</td><td class="num">0.098</td><td class="num">1.6e-08</td><td class="num">0.238</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.83rem;color:var(--muted);margin-top:6px;">No single factor explains more than 34% — suggests complex/multi-strategy exposure.</p>
+    </div>
+    <div>
+      <h3>Asset 5 — Top 5 by R²</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Factor</th><th class="num">Beta</th><th class="num">p-value</th><th class="num">R²</th></tr></thead>
+          <tbody>
+            <tr><td><strong>TIPs</strong></td><td class="num">0.951</td><td class="num best">9.9e-74</td><td class="num best">0.940</td></tr>
+            <tr><td>US AGG</td><td class="num">1.662</td><td class="num">3.8e-26</td><td class="num">0.614</td></tr>
+            <tr><td>Global AGG</td><td class="num">0.834</td><td class="num">1.2e-17</td><td class="num">0.464</td></tr>
+            <tr><td>EM Bond</td><td class="num">0.522</td><td class="num">4.6e-16</td><td class="num">0.430</td></tr>
+            <tr><td>US Muni</td><td class="num">1.013</td><td class="num">6.5e-09</td><td class="num">0.249</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="font-size:.83rem;color:var(--muted);margin-top:6px;">TIPs alone explains 94% of variance — strongly indicative of TIPS-linked exposure.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ── PHASE 2 ── -->
+<section id="phase2">
+  <div class="phase-header">
+    <div class="phase-pill">PHASE 2</div>
+    <h2>Full 28-Factor OLS</h2>
+  </div>
+
+  <p>
+    All 28 factors enter simultaneously. Including correlated factors reduces individual significance through
+    multicollinearity — many factors that were significant alone are crowded out. However, overall model fit
+    (R²) improves substantially over the best single-factor result for most assets.
+  </p>
+
+  <div class="tbl-wrap" style="margin-bottom:24px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Asset</th><th class="num">N</th><th class="num">R²</th><th class="num">Adj R²</th>
+          <th class="num">F-stat</th><th class="num">F p-value</th><th class="num">Sig factors</th><th>Key significant factors</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>xasset_1</td><td class="num">120</td><td class="num">0.860</td><td class="num">0.821</td>
+          <td class="num">21.98</td><td class="num">3.3e-29</td><td class="num">3</td>
+          <td>US AGG, Event Driven HF, HF FOF Div</td>
+        </tr>
+        <tr>
+          <td>xasset_2</td><td class="num">120</td><td class="num best">0.933</td><td class="num best">0.914</td>
+          <td class="num best">49.54</td><td class="num">1.4e-43</td><td class="num">4</td>
+          <td>MSCI World, MSCI Canada, US Value, S&amp;P500</td>
+        </tr>
+        <tr>
+          <td>xasset_3</td><td class="num">120</td><td class="num">0.657</td><td class="num">0.561</td>
+          <td class="num">6.84</td><td class="num">1.9e-12</td><td class="num">3</td>
+          <td>US AGG, Commodities, Event Driven HF</td>
+        </tr>
+        <tr>
+          <td>xasset_4</td><td class="num">120</td><td class="num">0.738</td><td class="num">0.665</td>
+          <td class="num">10.08</td><td class="num">2.5e-17</td><td class="num">5</td>
+          <td>Global AGG, HF FOF Div, Relative Value HF, EM Bond, High Yield</td>
+        </tr>
+        <tr>
+          <td>xasset_5</td><td class="num">120</td><td class="num">0.975</td><td class="num">0.968</td>
+          <td class="num">137.11</td><td class="num best">5.2e-63</td><td class="num">4</td>
+          <td>US Muni, Global AGG, <strong>TIPs</strong>, High Yield</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout" style="margin-bottom:20px;">
+    <div class="callout-icon">&#128203;</div>
+    <div>
+      <strong>Multicollinearity compression is visible.</strong>
+      Asset 1 had 11+ significant single-factor results but only 3 survive the joint model; Asset 2 had factors
+      like US Growth (single-factor R²&nbsp;=&nbsp;0.876) that fail to survive alongside S&amp;P500 and MSCI World.
+      This is the precise pattern that motivates spread feature construction — the pairwise signal degradation
+      indicates collinear factor families that a differential spread can disentangle.
+    </div>
+  </div>
+
+  <h3>Factor Loading Heatmap — Full 28-Factor Model</h3>
+  <div class="heatmap-wrap">
+    <img src="factor_heatmap.png" alt="Factor loading heatmap — 28 factors × 5 assets">
+    <figcaption>Left panel: t-statistics (red = positive loading, blue = negative); annotations show β coefficient with * for p ≤ 0.05.
+    Right panel: −log₁₀(p) significance intensity (* p&lt;.05, ** p&lt;.01, *** p&lt;.001).</figcaption>
+  </div>
+</section>
+
+<!-- ── PHASE 3 ── -->
+<section id="phase3">
+  <div class="phase-header">
+    <div class="phase-pill">PHASE 3</div>
+    <h2>VIF Analysis</h2>
+  </div>
+
+  <p>
+    Variance Inflation Factors quantify how much multicollinearity inflates each coefficient's standard error.
+    VIF is computed in two passes per asset: first on the subset of single-factor-significant factors, then on
+    the full-model-significant subset. Both passes use the same thresholds.
+  </p>
+
+  <div class="card-grid" style="margin-bottom:20px;">
+    <div class="card card-green">
+      <div class="label">VIF OK</div>
+      <div class="value">&lt; 5</div>
+      <div class="sub">Low collinearity — reliable coefficient estimates</div>
+    </div>
+    <div class="card card-gold">
+      <div class="label">VIF Warning</div>
+      <div class="value">5 – 10</div>
+      <div class="sub">Moderate inflation — interpret betas cautiously</div>
+    </div>
+    <div class="card card-red">
+      <div class="label">VIF Severe</div>
+      <div class="value">&gt; 10</div>
+      <div class="sub">High inflation — spread construction recommended</div>
+    </div>
+    <div class="card" style="border-top-color:#333;">
+      <div class="label">VIF Perfect</div>
+      <div class="value">∞</div>
+      <div class="sub">Exact linear dependence (e.g. HY-GAGG ≡ HY − Global AGG)</div>
+    </div>
+  </div>
+
+  <p>
+    Key findings from the VIF pass: the hedge fund strategy indices (Long Short HF, Event Driven HF, HF FOF Div,
+    Relative Value HF) are highly intercorrelated (pairwise correlations 0.85–0.93), producing severe or perfect VIF
+    when included together. HY-GAGG is perfectly collinear with High Yield and Global AGG by construction (VIF&nbsp;=&nbsp;∞),
+    which is expected and informative. The single-factor-significant subsets for Assets 1 and 5 show
+    well-behaved bond factor VIFs, consistent with their clean factor structures. Asset 4's significant factors
+    include multiple HF indices simultaneously, yielding high VIFs that reinforce the need for the spread construction step.
+    Full per-asset VIF tables are in <code>vif_analysis.xlsx</code>.
+  </p>
+</section>
+
+<!-- ── PHASE 4 ── -->
+<section id="phase4">
+  <div class="phase-header">
+    <div class="phase-pill">PHASE 4</div>
+    <h2>Feature Engineering — Spread Construction</h2>
+  </div>
+
+  <p>
+    The HY-GAGG spread (High Yield minus Global AGG) was the original motivating example: two highly correlated
+    factors where each is significant alone but only their differential is informative in a joint model. This logic
+    is extended systematically to the entire factor universe.
+  </p>
+
+  <h3>Construction logic</h3>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">i</div>
+      <div class="step-body">
+        <h4>Identify correlated pairs: |Corr(A, B)| &gt; 0.70</h4>
+        <p>120 pairs met the correlation threshold from the 28-factor universe.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">ii</div>
+      <div class="step-body">
+        <h4>Both significant in at least one single-factor model</h4>
+        <p>Ensures the pair carries real explanatory power before constructing the spread.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">iii</div>
+      <div class="step-body">
+        <h4>At least one factor loses significance in the full joint model</h4>
+        <p>"Lost significance" (single-factor p ≤ 0.05 → full-model p &gt; 0.05) is the signature of
+        multicollinearity suppressing a real signal. The spread is designed to recover that signal.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">iv</div>
+      <div class="step-body">
+        <h4>Direction: A − B (positive corr) or A + B (negative corr)</h4>
+        <p>For positively correlated pairs, the difference isolates the orthogonal component. All 120
+        qualifying pairs had positive correlations, so all constructed features are differences.
+        For negatively correlated pairs, addition would combine opposing directional signals — none qualified
+        in this dataset, and the framework handles this automatically.</p>
+      </div>
+    </div>
+  </div>
+
+  <h3>Selected spread candidates by factor family</h3>
+  <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th>Feature</th><th>Factor A</th><th>Factor B</th><th class="num">Corr(A,B)</th><th>Interpretation</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>US AGG − TIPs</td><td>US AGG</td><td>TIPs</td><td class="num">0.805</td><td>Nominal vs. inflation-protected bond premium (break-even inflation)</td></tr>
+        <tr><td>US AGG − Global AGG</td><td>US AGG</td><td>Global AGG</td><td class="num">0.701</td><td>US vs. global investment-grade bond differential</td></tr>
+        <tr><td>Commodities − MSCI Canada</td><td>Commodities</td><td>MSCI Canada</td><td class="num">0.719</td><td>Pure commodity vs. equity-linked commodity exposure</td></tr>
+        <tr><td>EM Bond − High Yield</td><td>EM Bond</td><td>High Yield</td><td class="num">0.739</td><td>Sovereign EM credit vs. US corporate credit spread</td></tr>
+        <tr><td>High Yield − HY-GAGG</td><td>High Yield</td><td>HY-GAGG</td><td class="num">0.810</td><td>Equivalent to Global AGG — isolates the investment-grade component</td></tr>
+        <tr><td>Relative Value HF − High Yield</td><td>Relative Value HF</td><td>High Yield</td><td class="num">0.852</td><td>HF alpha vs. passive credit beta</td></tr>
+        <tr><td>US Growth − US Value</td><td>US Growth</td><td>US Value</td><td class="num">0.905</td><td>Pure growth vs. value style factor</td></tr>
+        <tr><td>MSCI World − S&amp;P500</td><td>MSCI World</td><td>S&amp;P500</td><td class="num">0.965</td><td>Non-US developed equity differential</td></tr>
+        <tr><td>Long Short HF − Event Driven HF</td><td>Long Short HF</td><td>Event Driven HF</td><td class="num">0.934</td><td>Systematic long-short vs. event-driven HF style differential</td></tr>
+        <tr><td>HF FOF Div − Relative Value HF</td><td>HF FOF Div</td><td>Relative Value HF</td><td class="num">0.851</td><td>Broad diversified HF vs. relative value sub-strategy</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p style="margin-top:14px;">
+    The 120 spread features were then individually regressed against each asset (single-factor test) to confirm
+    statistical significance before entering the combined model. Over 300 spread-asset pairs were significant at
+    p ≤ 0.05, with the strongest results concentrated in Assets 2 and 3 where factor crowding was most severe.
+    Asset 5 showed its clearest spread signal on <strong>US AGG − TIPs</strong> (R²&nbsp;=&nbsp;0.792,
+    t&nbsp;=&nbsp;−11.4 in the combined model), confirming inflation protection as a primary return driver.
+  </p>
+</section>
+
+<!-- ── PHASE 5 ── -->
+<section id="phase5">
+  <div class="phase-header">
+    <div class="phase-pill">PHASE 5</div>
+    <h2>Combined Model — 28 Originals + 120 Spread Features</h2>
+  </div>
+
+  <p>
+    All 148 features enter simultaneously. R² is unchanged from the 28-factor model (as expected — the spreads
+    are linear combinations of existing factors), but the number of individually significant coefficients
+    increases substantially as spread features resolve multicollinearity and allow previously suppressed
+    signals to surface.
+  </p>
+
+  <div class="legend">
+    <div class="legend-item"><div class="swatch" style="background:#90EE90;"></div><span>Green — original factor, p ≤ 0.05</span></div>
+    <div class="legend-item"><div class="swatch" style="background:#b3d9ff;"></div><span>Blue (★) — constructed spread, p ≤ 0.05</span></div>
+  </div>
+
+  <div class="tbl-wrap" style="margin-bottom:24px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Asset</th><th class="num">R²</th><th class="num">Adj R²</th>
+          <th class="num">F-stat</th><th class="num">Sig orig</th><th class="num">Sig spreads</th><th class="num">Total sig</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>xasset_1</td><td class="num">0.860</td><td class="num">0.821</td>
+          <td class="num">21.98</td><td class="num">8</td><td class="num">18</td><td class="num">26</td>
+        </tr>
+        <tr>
+          <td>xasset_2</td><td class="num best">0.933</td><td class="num best">0.914</td>
+          <td class="num best">49.54</td><td class="num">9</td><td class="num">37</td><td class="num best">46</td>
+        </tr>
+        <tr>
+          <td>xasset_3</td><td class="num">0.657</td><td class="num">0.561</td>
+          <td class="num">6.84</td><td class="num">4</td><td class="num">14</td><td class="num">18</td>
+        </tr>
+        <tr>
+          <td>xasset_4</td><td class="num">0.738</td><td class="num">0.665</td>
+          <td class="num">10.08</td><td class="num">9</td><td class="num">19</td><td class="num">28</td>
+        </tr>
+        <tr>
+          <td>xasset_5</td><td class="num">0.975</td><td class="num">0.968</td>
+          <td class="num">137.11</td><td class="num">7</td><td class="num">13</td><td class="num">20</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Key findings from the combined model</h3>
+  <ul style="padding-left:20px;font-size:.91rem;line-height:1.9;">
+    <li><strong>Asset 2:</strong> US Growth − US Value becomes the single most statistically significant feature
+        across the entire analysis (t&nbsp;=&nbsp;9.9, p&nbsp;=&nbsp;3.4e-16), suggesting a distinct
+        growth factor tilt beyond plain S&amp;P500 market beta.</li>
+    <li><strong>Asset 5:</strong> The US AGG − TIPs spread (t&nbsp;=&nbsp;−11.4) reinforces the TIPs loading
+        (t&nbsp;=&nbsp;22.5) — when nominal bonds outperform inflation-protected bonds the asset falls,
+        isolating its inflation-protection mandate.</li>
+    <li><strong>Asset 1:</strong> US AGG and TIPs survive alongside the US AGG − TIPs spread and
+        US AGG − Global AGG spread, decomposing the bond exposure into domestic nominal, inflation-adjusted,
+        and relative-to-global components.</li>
+    <li><strong>Asset 4:</strong> HF FOF Div (t&nbsp;=&nbsp;6.4) and HF FOF Div − Relative Value HF
+        (t&nbsp;=&nbsp;6.4) jointly dominate, with secondary High Yield and Global AGG loadings — suggesting
+        a multi-strategy profile with a fixed-income undertone rather than a pure credit fund.</li>
+    <li><strong>Asset 3:</strong> Commodities and Event Driven HF survive with multiple Event Driven HF spread
+        features significant, but negative US AGG loading (β&nbsp;=&nbsp;−1.28) persists — consistent with a
+        real assets / commodity-linked allocation that hedges out rate duration.</li>
+  </ul>
+
+  <h3>Combined Model Heatmap</h3>
+  <div class="heatmap-wrap">
+    <img src="combined_heatmap.png" alt="Combined factor loading heatmap — 148 features × 5 assets">
+    <figcaption>★ denotes constructed spread features. Left panel: t-statistics; right panel: significance level.
+    Features ordered by average absolute t-statistic across all five assets.</figcaption>
+  </div>
+</section>
+
+<!-- ── ASSET CHARACTERIZATION ── -->
+<section id="characterization">
+  <h2>Asset Characterization</h2>
+  <p>
+    The following characterizations are based entirely on statistical factor exposures and are intended as
+    hypotheses, not definitive identifications. Suggestive language is used throughout. All p-values
+    and R² figures refer to the combined model unless noted.
+  </p>
+
+  <div class="asset-grid">
+
+    <!-- Asset 1 -->
+    <div class="asset-card">
+      <div class="ac-header ac-1">Asset 1 — Consistent with a US Investment-Grade Bond Index</div>
+      <div class="ac-body">
+        <div class="stat-row">
+          <div class="stat-pill">R² = 0.860</div>
+          <div class="stat-pill">Adj R² = 0.821</div>
+          <div class="stat-pill">26 sig factors</div>
+        </div>
+        <ul>
+          <li>US AGG is the strongest single-factor signal (standalone R²&nbsp;=&nbsp;0.787), and remains dominant
+              in both the 28-factor and combined models (t&nbsp;=&nbsp;7.9).</li>
+          <li>TIPs also loads positively (t&nbsp;=&nbsp;7.2), suggesting duration exposure to
+              both nominal and real government bonds.</li>
+          <li>The spread US AGG − Global AGG (t&nbsp;=&nbsp;6.8) indicates a preference for domestic
+              over global bonds — consistent with a US-domiciled investment-grade mandate.</li>
+          <li>The spread US AGG − TIPs (t&nbsp;=&nbsp;5.7) captures the inflation component within
+              the bond allocation.</li>
+          <li>Negative HY-GAGG loading suggests minimal high-yield credit exposure — pointing toward
+              a high-grade, rate-sensitive portfolio.</li>
+        </ul>
+        <div class="note">Factor profile is most consistent with a broad US investment-grade bond index
+        (e.g., Bloomberg US Aggregate), with incidental sensitivity to hedge fund diversified strategies.</div>
+      </div>
+    </div>
+
+    <!-- Asset 2 -->
+    <div class="asset-card">
+      <div class="ac-header ac-2">Asset 2 — Consistent with a US Large-Cap Growth Equity Portfolio</div>
+      <div class="ac-body">
+        <div class="stat-row">
+          <div class="stat-pill">R² = 0.933</div>
+          <div class="stat-pill">Adj R² = 0.914</div>
+          <div class="stat-pill">46 sig factors</div>
+        </div>
+        <ul>
+          <li>US Growth is the strongest standalone predictor (R²&nbsp;=&nbsp;0.876), and the spread
+              US Growth − US Value achieves t&nbsp;=&nbsp;9.9 — the highest t-statistic in the entire
+              analysis — suggesting a distinct growth style tilt.</li>
+          <li>S&amp;P500 (β&nbsp;=&nbsp;0.504) and multiple MSCI regional indices are all significant,
+              consistent with a large-cap equity fund with global secondary exposures.</li>
+          <li>Many X − S&amp;P500 spreads enter with negative betas, meaning the asset tracks S&amp;P500
+              more closely than other equity benchmarks — characteristic of a US-centric equity vehicle.</li>
+          <li>High model fit (R²&nbsp;=&nbsp;0.933) with 46 significant combined factors suggests this
+              asset is well-explained by the equity factor universe.</li>
+        </ul>
+        <div class="note">Factor exposures are most consistent with a US large-cap growth equity fund,
+        potentially with technology or growth-sector concentration beyond the broad S&amp;P500 composition.</div>
+      </div>
+    </div>
+
+    <!-- Asset 3 -->
+    <div class="asset-card">
+      <div class="ac-header ac-3">Asset 3 — Consistent with a Commodity / Real Assets Fund</div>
+      <div class="ac-body">
+        <div class="stat-row">
+          <div class="stat-pill">R² = 0.657</div>
+          <div class="stat-pill">Adj R² = 0.561</div>
+          <div class="stat-pill">18 sig factors</div>
+        </div>
+        <ul>
+          <li>Commodities is the dominant factor in both single-factor (R²&nbsp;=&nbsp;0.502) and joint models
+              (t&nbsp;=&nbsp;4.4), indicating direct exposure to commodity prices.</li>
+          <li>The spread Commodities − MSCI Canada (t&nbsp;=&nbsp;3.5) distinguishes pure commodity returns
+              from equity-linked commodity proxies — consistent with a physical or futures-based commodity fund.</li>
+          <li>Negative US AGG loading (β&nbsp;=&nbsp;−1.28) may suggest deliberate interest rate hedging
+              or an inflation-sensitive mandate that moves inversely to bond prices.</li>
+          <li>The relatively low R² (0.657) is not surprising: commodity returns are driven by supply shocks,
+              geopolitical events, and demand cycles that financial market factors capture poorly.</li>
+          <li>MSCI Canada's significance in single-factor regressions is consistent — Canada's equity market
+              has heavy energy and materials sector weights, making it a partial commodity proxy.</li>
+        </ul>
+        <div class="note">Factor profile is most consistent with a broad commodity fund or real assets
+        allocation (energy, metals, agriculture) with some sensitivity to emerging market equity via commodity
+        demand dynamics.</div>
+      </div>
+    </div>
+
+    <!-- Asset 4 -->
+    <div class="asset-card">
+      <div class="ac-header ac-4">Asset 4 — Consistent with a Multi-Strategy / Diversified Credit Fund</div>
+      <div class="ac-body">
+        <div class="stat-row">
+          <div class="stat-pill">R² = 0.738</div>
+          <div class="stat-pill">Adj R² = 0.665</div>
+          <div class="stat-pill">28 sig factors</div>
+        </div>
+        <ul>
+          <li>HF FOF Div (Hedge Fund Fund-of-Funds Diversified) is the strongest original factor in both
+              the 28-factor and combined models (t&nbsp;=&nbsp;6.4), and HF FOF Div − Relative Value HF
+              (t&nbsp;=&nbsp;6.4) is the strongest spread — suggesting exposure to a broad multi-strategy
+              alternative investment profile.</li>
+          <li>High Yield (t&nbsp;=&nbsp;3.1) and Global AGG (t&nbsp;=&nbsp;3.1) are jointly significant,
+              indicating a credit component embedded within the broader strategy.</li>
+          <li>The net effect of High Yield and HY-GAGG loadings implies the asset tilts toward
+              investment-grade rather than pure high-yield credit.</li>
+          <li>Low best single-factor R² (0.341 from HF FOF Div) suggests a blended or actively managed
+              profile that no single market factor can capture alone.</li>
+          <li>Multiple EM equity indices (MSCI Canada, MSCI EM, MSCI Asia ex-J) are significant —
+              possible global diversification or EM credit overlay.</li>
+        </ul>
+        <div class="note">Prior hypothesis of "High Yield credit" is revised to a broader
+        multi-strategy or absolute-return fund with credit exposure, consistent with a fund-of-funds
+        or multi-asset alternative allocation rather than a single-asset-class bond fund.</div>
+      </div>
+    </div>
+
+    <!-- Asset 5 -->
+    <div class="asset-card">
+      <div class="ac-header ac-5">Asset 5 — Highly Consistent with a TIPS Index Fund</div>
+      <div class="ac-body">
+        <div class="stat-row">
+          <div class="stat-pill">R² = 0.975</div>
+          <div class="stat-pill">Adj R² = 0.968</div>
+          <div class="stat-pill">F-stat = 137</div>
+        </div>
+        <ul>
+          <li>TIPs achieves t&nbsp;=&nbsp;22.5 (p&nbsp;=&nbsp;2e-39) in the combined model — by far the
+              strongest loading anywhere in the analysis. The standalone R²&nbsp;=&nbsp;0.940 is
+              remarkable for a single factor.</li>
+          <li>The spread US AGG − TIPs loads at t&nbsp;=&nbsp;−11.4: when nominal bonds outperform
+              inflation-protected bonds, this asset falls — directly consistent with an asset that
+              provides inflation compensation.</li>
+          <li>R²&nbsp;=&nbsp;0.975 leaves only 2.5% of variance unexplained, suggesting a passive or
+              near-passive index-tracking strategy.</li>
+          <li>Negative US Muni loading (β&nbsp;=&nbsp;−0.13) and positive High Yield (β&nbsp;=&nbsp;0.02)
+              are minor secondary exposures consistent with a broad US fixed-income index that includes
+              TIPS-heavy segments.</li>
+        </ul>
+        <div class="note">The near-perfect explanatory power of TIPs and the negative US AGG − TIPs
+        spread loading together provide strong statistical evidence that Asset 5 may be a TIPS
+        index fund or ETF (e.g., iShares TIPS Bond ETF or similar).</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── OUTPUTS ── -->
+<section id="outputs">
+  <h2>Output Files</h2>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr><th>File</th><th>Contents</th><th>Highlighting</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>single_factor_regressions.xlsx</code></td>
+          <td>135 single-factor regression results (5 assets × 27 factors + HY-GAGG)</td>
+          <td><span class="badge badge-green">Green</span> p ≤ 0.05</td>
+        </tr>
+        <tr>
+          <td><code>full_27factor_regressions.xlsx</code></td>
+          <td>Full 28-factor OLS per asset — overview tab + one tab per asset</td>
+          <td><span class="badge badge-green">Green</span> p ≤ 0.05 per row</td>
+        </tr>
+        <tr>
+          <td><code>vif_analysis.xlsx</code></td>
+          <td>VIF tables for single-factor-sig and full-model-sig subsets, per asset</td>
+          <td><span class="badge badge-gold">Gold</span> VIF&gt;5 &nbsp; <span class="badge badge-red">Red</span> VIF&gt;10 / ∞</td>
+        </tr>
+        <tr>
+          <td><code>feature_creation.xlsx</code></td>
+          <td>P-value comparison table, all spread candidates, significant spreads</td>
+          <td>Status-coded: always sig, lost sig, gained sig</td>
+        </tr>
+        <tr>
+          <td><code>combined_factor_analysis.xlsx</code></td>
+          <td>Combined 148-feature OLS per asset + VIF sheets</td>
+          <td><span class="badge badge-green">Green</span> orig sig &nbsp; <span class="badge badge-blue">Blue</span> spread sig</td>
+        </tr>
+        <tr>
+          <td><code>factor_heatmap.png</code></td>
+          <td>Dual-panel heatmap — full 28-factor model</td>
+          <td>t-stat colormap + −log₁₀(p)</td>
+        </tr>
+        <tr>
+          <td><code>combined_heatmap.png</code></td>
+          <td>Dual-panel heatmap — combined 148-feature model (★ = spread)</td>
+          <td>t-stat colormap + −log₁₀(p)</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  Fordham University MSQF &mdash; Quantitative Methods for Portfolio Management &mdash; Spring 2026 &mdash;
+  Analysis performed in Python (statsmodels, pandas, seaborn) &mdash; 120 monthly observations
+</footer>
+
+</body>
+</html>
