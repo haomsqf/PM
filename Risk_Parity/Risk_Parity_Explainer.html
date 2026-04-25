@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Risk Parity — Process & Results Guide</title>
+<style>
+  :root {
+    --bg:        #f7f8fa;
+    --card:      #ffffff;
+    --border:    #e2e6ea;
+    --text:      #1a1d23;
+    --muted:     #5a6070;
+    --accent:    #2563eb;
+    --accent-bg: #eff6ff;
+    --green:     #166534;
+    --green-bg:  #dcfce7;
+    --orange:    #9a3412;
+    --orange-bg: #fff7ed;
+    --purple:    #5b21b6;
+    --purple-bg: #f5f3ff;
+    --red:       #991b1b;
+    --red-bg:    #fef2f2;
+    --gray:      #374151;
+    --gray-bg:   #f3f4f6;
+    --font:      'Segoe UI', system-ui, sans-serif;
+    --mono:      'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text);
+         font-size: 15px; line-height: 1.7; }
+  .page { max-width: 1020px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 6px; }
+  h2 { font-size: 1.35rem; font-weight: 700; margin: 44px 0 14px; padding-top: 12px;
+       border-top: 2px solid var(--border); color: var(--accent); }
+  h3 { font-size: 1.08rem; font-weight: 600; margin: 22px 0 8px; }
+  h4 { font-size: 0.85rem; font-weight: 600; margin: 14px 0 4px; color: var(--muted);
+       text-transform: uppercase; letter-spacing: .06em; }
+  p  { margin-bottom: 12px; }
+  ul, ol { margin: 8px 0 12px 22px; }
+  li { margin-bottom: 5px; }
+  a  { color: var(--accent); }
+  /* cards */
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+          padding: 20px 24px; margin-bottom: 18px; }
+  .card-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .card-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  @media(max-width:680px){ .card-row,.card-row.three { grid-template-columns:1fr; } }
+  /* callouts */
+  .note { background:var(--accent-bg); border-left:4px solid var(--accent);
+          padding:12px 16px; border-radius:0 6px 6px 0; margin:14px 0; }
+  .warn { background:var(--orange-bg); border-left:4px solid #f97316;
+          padding:12px 16px; border-radius:0 6px 6px 0; margin:14px 0; }
+  .tip  { background:var(--green-bg); border-left:4px solid #16a34a;
+          padding:12px 16px; border-radius:0 6px 6px 0; margin:14px 0; }
+  /* badges */
+  .badge { display:inline-block; padding:2px 10px; border-radius:20px;
+           font-size:0.78rem; font-weight:700; letter-spacing:.03em;
+           vertical-align:middle; white-space:nowrap; }
+  .b-vol  { background:#dbeafe; color:#1e40af; }
+  .b-erc  { background:#dcfce7; color:#166534; }
+  .b-mdp  { background:#ffedd5; color:#9a3412; }
+  .b-hrp  { background:#f3e8ff; color:#5b21b6; }
+  .b-ferc { background:#ffe4e6; color:#9f1239; }
+  .b-ew   { background:#f3f4f6; color:#374151; }
+  .b-6040 { background:#e2e8f0; color:#1e293b; }
+  /* asset identity badges */
+  .b-bond  { background:#dbeafe; color:#1e3a8a; }
+  .b-tips  { background:#e0f2fe; color:#075985; }
+  .b-eq    { background:#dcfce7; color:#14532d; }
+  .b-comm  { background:#fef9c3; color:#713f12; }
+  .b-alt   { background:#f3e8ff; color:#4c1d95; }
+  /* formula */
+  .formula { background:var(--gray-bg); border:1px solid var(--border);
+             border-radius:8px; padding:14px 18px; font-family:var(--mono);
+             font-size:0.88rem; margin:10px 0 14px; overflow-x:auto; white-space:pre; }
+  /* tables */
+  table { width:100%; border-collapse:collapse; font-size:0.88rem; margin:12px 0; }
+  th { background:var(--gray-bg); text-align:left; padding:8px 12px;
+       font-weight:600; border-bottom:2px solid var(--border); }
+  td { padding:7px 12px; border-bottom:1px solid var(--border); vertical-align:top; }
+  tr:last-child td { border-bottom:none; }
+  tr:hover td { background:var(--bg); }
+  /* steps */
+  .steps { counter-reset:step; list-style:none; margin-left:0; }
+  .steps li { counter-increment:step; position:relative; padding:12px 16px 12px 56px;
+              border-left:3px solid var(--accent); margin-bottom:10px;
+              background:var(--card); border-radius:0 8px 8px 0;
+              border:1px solid var(--border); border-left:3px solid var(--accent); }
+  .steps li::before { content:counter(step); position:absolute; left:14px;
+                      top:50%; transform:translateY(-50%); width:26px; height:26px;
+                      background:var(--accent); color:#fff; border-radius:50%;
+                      display:flex; align-items:center; justify-content:center;
+                      font-weight:700; font-size:0.8rem; }
+  /* method card stripe */
+  .method-header { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .method-stripe { width:5px; border-radius:3px; align-self:stretch; min-height:24px; flex-shrink:0; }
+  .stripe-vol  { background:#3b82f6; }
+  .stripe-erc  { background:#22c55e; }
+  .stripe-mdp  { background:#f97316; }
+  .stripe-hrp  { background:#a855f7; }
+  .stripe-ferc { background:#e11d48; }
+  .stripe-ew   { background:#9ca3af; }
+  .stripe-6040 { background:#334155; }
+  /* toc */
+  .toc { column-count:2; column-gap:24px; }
+  .toc a { display:block; color:var(--muted); text-decoration:none; padding:2px 0; }
+  .toc a:hover { color:var(--accent); }
+  /* tag */
+  .tag { font-size:0.72rem; background:var(--accent-bg); color:var(--accent);
+         padding:2px 7px; border-radius:4px; font-weight:600; }
+  .divider { border:none; border-top:1px solid var(--border); margin:30px 0; }
+  code { font-family:var(--mono); background:var(--gray-bg); padding:1px 6px;
+         border-radius:4px; font-size:0.87em; }
+  /* chart */
+  .chart-wrap { background:var(--card); border:1px solid var(--border);
+                border-radius:10px; padding:16px; margin:18px 0; text-align:center; }
+  .chart-wrap img { max-width:100%; border-radius:6px; }
+  .chart-caption { font-size:0.82rem; color:var(--muted); margin-top:8px; }
+  /* asset identity card */
+  .asset-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; margin:16px 0; }
+  @media(max-width:760px){ .asset-grid { grid-template-columns:1fr 1fr; } }
+  .asset-card { background:var(--card); border:1px solid var(--border); border-radius:8px;
+                padding:14px 12px; text-align:center; }
+  .asset-num { font-size:0.72rem; color:var(--muted); font-weight:700;
+               text-transform:uppercase; letter-spacing:.06em; }
+  .asset-type { font-size:1.0rem; font-weight:700; margin:6px 0 4px; }
+  .asset-corr { font-size:0.78rem; color:var(--muted); }
+  /* corr pill */
+  .corr-pill { display:inline-block; padding:1px 8px; border-radius:10px;
+               font-size:0.75rem; font-weight:600; margin:2px 2px; }
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div style="background:var(--accent);color:#fff;padding:28px 32px;border-radius:12px;margin-bottom:32px;">
+  <div style="font-size:0.8rem;opacity:.75;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;">
+    QFGB 8948 · Team Portfolio Project · Page 5
+  </div>
+  <h1 style="color:#fff;border:none;margin:0 0 8px;">Risk Parity: Process &amp; Results Guide</h1>
+  <p style="opacity:.85;margin:0;">
+    Plain-English walkthrough of every method, formula, output, and chart in
+    <code style="background:rgba(255,255,255,.2);color:#fff;">Risk_Parity.ipynb</code>,
+    with asset identities from <code style="background:rgba(255,255,255,.2);color:#fff;">kalman_factor_model_v2.ipynb</code>.
+  </p>
+</div>
+
+<!-- TOC -->
+<div class="card">
+  <h4>Contents</h4>
+  <div class="toc">
+    <a href="#s1">1 · What is Risk Parity?</a>
+    <a href="#s2">2 · The Data</a>
+    <a href="#s-assets">3 · Asset Identities (from Kalman)</a>
+    <a href="#s3">4 · Key Building Block: TRC</a>
+    <a href="#s4">5 · The Seven Portfolios</a>
+    <a href="#s5">6 · How the Rolling Window Works</a>
+    <a href="#s6">7 · Output: Performance Tables</a>
+    <a href="#s7">8 · Output: Charts</a>
+    <a href="#s8">9 · Output: TRC &amp; Factor TRC</a>
+    <a href="#s9">10 · Output: End-of-Sample Snapshot</a>
+    <a href="#s10">11 · What to Take from This</a>
+  </div>
+</div>
+
+
+<!-- ══════════════ ASSET QUICK SUMMARY ══════════════ -->
+<div class="card" style="margin-bottom:28px;">
+  <h4 style="margin-bottom:10px;">The Portfolio at a Glance — Five Asset Classes</h4>
+  <p style="margin-bottom:14px;">
+    The client's current portfolio holds <strong>equal 20% weights</strong> in five anonymised assets.
+    Their real-world identities were determined by running a <strong>Kalman-filtered factor model</strong>
+    (<code>kalman_factor_model_v2.ipynb</code>) that regressed each asset's monthly returns against
+    27 market indices (Jan 2004 – Dec 2013). The index with the highest Pearson correlation
+    to each asset's return stream becomes its <em>home factor</em> — its economic identity.
+  </p>
+  <table>
+    <tr>
+      <th>Asset</th>
+      <th>Identity</th>
+      <th>Home Factor</th>
+      <th>Correlation</th>
+      <th>Monthly σ</th>
+      <th>Risk class</th>
+    </tr>
+    <tr>
+      <td><strong>Asset 1</strong></td>
+      <td>US Investment-Grade Bonds</td>
+      <td>US AGG</td>
+      <td>r = 0.892</td>
+      <td>0.72%</td>
+      <td><span class="badge b-bond">Rates</span></td>
+    </tr>
+    <tr>
+      <td><strong>Asset 2</strong></td>
+      <td>US Large-Cap Growth Equity</td>
+      <td>US Growth</td>
+      <td>r = 0.936</td>
+      <td>4.24%</td>
+      <td><span class="badge b-eq">Equity</span></td>
+    </tr>
+    <tr>
+      <td><strong>Asset 3</strong></td>
+      <td>Commodities / Real Assets</td>
+      <td>Commodities</td>
+      <td>r = 0.708</td>
+      <td>5.93%</td>
+      <td><span class="badge b-comm">Macro</span></td>
+    </tr>
+    <tr>
+      <td><strong>Asset 4</strong></td>
+      <td>Diversified Hedge Fund (FoF)</td>
+      <td>HF FOF Div</td>
+      <td>r = 0.583</td>
+      <td>1.26%</td>
+      <td><span class="badge b-alt">Alternatives</span></td>
+    </tr>
+    <tr>
+      <td><strong>Asset 5</strong></td>
+      <td>US TIPS (Inflation Bonds)</td>
+      <td>TIPs</td>
+      <td>r = 0.973</td>
+      <td>1.41%</td>
+      <td><span class="badge b-tips">Inflation</span></td>
+    </tr>
+  </table>
+  <div class="note" style="margin-top:14px;margin-bottom:0;">
+    <strong>Why this matters for Risk Parity:</strong> Assets 2 and 3 (equity and commodities)
+    are <em>6–8× more volatile</em> than the bond-like assets. At 20% dollar weights each,
+    they dominate the portfolio's risk budget — the core problem Risk Parity is designed to fix.
+    Full detail on factor identification is in <a href="#s-assets">Section 3</a>.
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 1 ══════════════ -->
+<h2 id="s1">1 · What is Risk Parity?</h2>
+<p>
+  Traditional portfolios like 60/40 allocate <em>dollars</em> roughly equally —
+  but because equities are far more volatile than bonds, almost all of the risk ends
+  up sitting in the equity sleeve. The portfolio is dollar-diversified but not
+  <em>risk</em>-diversified.
+</p>
+<div class="card-row">
+  <div class="card">
+    <h4>60/40 Portfolio</h4>
+    <p>60% equities, 40% bonds by dollar weight.</p>
+    <p style="color:var(--red);">~90% of portfolio <em>risk</em> comes from equities.</p>
+    <p>Bonds contribute almost nothing to risk — capital is "wasted."</p>
+  </div>
+  <div class="card">
+    <h4>Risk Parity Portfolio</h4>
+    <p>Weights chosen so every asset contributes <em>equally</em> to total risk.</p>
+    <p style="color:var(--green);">Each asset: exactly 1/N of portfolio risk.</p>
+    <p>Low-vol assets (bonds, TIPS) get larger dollar weights to compensate.</p>
+  </div>
+</div>
+<div class="note">
+  <strong>Core belief:</strong> Over long horizons, all major risk assets deliver similar
+  risk-adjusted returns. If true, the most diversified portfolio is the best long-run bet.
+  Risk Parity is a <em>diversification-first</em> philosophy.
+</div>
+
+
+<!-- ══════════════ SECTION 2 ══════════════ -->
+<h2 id="s2">2 · The Data</h2>
+<div class="card">
+  <table>
+    <tr><th>Item</th><th>Detail</th></tr>
+    <tr><td><strong>Source</strong></td><td><code>1 Project - Data.xlsx</code> — sheet <em>Python FULL DATA</em></td></tr>
+    <tr><td><strong>Assets</strong></td><td>5 asset classes · client's current equal-weight portfolio</td></tr>
+    <tr><td><strong>Full history</strong></td><td>Jan 2004 – Dec 2013 · 120 monthly total returns (decimal, e.g. 0.0063 = +0.63%)</td></tr>
+    <tr><td><strong>Estimation window</strong></td><td>First 36 months (Jan 2004 – Dec 2006) → first covariance estimate</td></tr>
+    <tr><td><strong>Backtest window</strong></td><td>Jan 2007 – Dec 2013 · 84 monthly portfolio returns</td></tr>
+    <tr><td><strong>Factor data</strong></td><td>Sheet <em>Python FACTORS</em> · 27 market factors · used for 60/40 benchmark and Factor ERC</td></tr>
+    <tr><td><strong>Risk-free rate</strong></td><td><code>Cash</code> column · monthly T-bill proxy · used in Sharpe &amp; Calmar</td></tr>
+    <tr><td><strong>Kalman loadings</strong></td><td><code>PM/factor_loadings_v2_smoothed.csv</code> · time-varying betas · Factor ERC only</td></tr>
+    <tr><td><strong>Covariance convention</strong></td><td>Population variance <code>ddof=0</code> (÷N) — matches the Excel reference file exactly</td></tr>
+  </table>
+</div>
+
+
+<!-- ══════════════ SECTION: ASSET IDENTITIES ══════════════ -->
+<h2 id="s-assets">3 · Asset Identities (from Kalman Factor Analysis)</h2>
+<p>
+  <code>kalman_factor_model_v2.ipynb</code> identified each asset by computing its
+  Pearson correlation with 27 market index factors. The factor with the highest
+  absolute correlation becomes the <strong>home factor</strong> — i.e., the asset's
+  primary market identity. The five assets turn out to span five distinct risk classes:
+</p>
+
+<div class="asset-grid">
+  <div class="asset-card" style="border-top:4px solid #3b82f6;">
+    <div class="asset-num">Asset 1</div>
+    <div class="asset-type">US Investment-Grade Bonds</div>
+    <span class="badge b-bond">Rates</span>
+    <div class="asset-corr" style="margin-top:8px;">
+      Home: <strong>US AGG</strong> r = 0.892<br>
+      Also: TIPs (0.73), T-bill (0.68)<br>
+      Monthly σ ≈ <strong>0.72%</strong>
+    </div>
+  </div>
+  <div class="asset-card" style="border-top:4px solid #22c55e;">
+    <div class="asset-num">Asset 2</div>
+    <div class="asset-type">US Large-Cap Growth Equity</div>
+    <span class="badge b-eq">Equity</span>
+    <div class="asset-corr" style="margin-top:8px;">
+      Home: <strong>US Growth</strong> r = 0.936<br>
+      Also: S&amp;P500 (0.89), MSCI World (0.85)<br>
+      Monthly σ ≈ <strong>4.24%</strong>
+    </div>
+  </div>
+  <div class="asset-card" style="border-top:4px solid #f97316;">
+    <div class="asset-num">Asset 3</div>
+    <div class="asset-type">Commodities / Real Assets</div>
+    <span class="badge b-comm">Macro</span>
+    <div class="asset-corr" style="margin-top:8px;">
+      Home: <strong>Commodities</strong> r = 0.708<br>
+      Also: MSCI EM (0.64), Long Short HF (0.66)<br>
+      Monthly σ ≈ <strong>5.93%</strong>
+    </div>
+  </div>
+  <div class="asset-card" style="border-top:4px solid #a855f7;">
+    <div class="asset-num">Asset 4</div>
+    <div class="asset-type">Diversified Hedge Fund (FoF)</div>
+    <span class="badge b-alt">Alternatives</span>
+    <div class="asset-corr" style="margin-top:8px;">
+      Home: <strong>HF FOF Div</strong> r = 0.583<br>
+      Also: Commodities (0.53), MSCI EM (0.49)<br>
+      Monthly σ ≈ <strong>1.26%</strong>
+    </div>
+  </div>
+  <div class="asset-card" style="border-top:4px solid #0891b2;">
+    <div class="asset-num">Asset 5</div>
+    <div class="asset-type">US TIPS (Inflation Bonds)</div>
+    <span class="badge b-tips">Inflation</span>
+    <div class="asset-corr" style="margin-top:8px;">
+      Home: <strong>TIPs</strong> r = 0.973<br>
+      Also: US AGG (0.79), Global AGG (0.69)<br>
+      Monthly σ ≈ <strong>1.41%</strong>
+    </div>
+  </div>
+</div>
+
+<div class="note">
+  <strong>What this portfolio is:</strong> The client holds equal weights in two types of bonds
+  (nominal + inflation-linked), a pure US equity fund, a commodity index, and a diversified
+  hedge fund. This is actually a reasonable multi-asset mix — the Risk Parity question is
+  whether 20% in each is the right <em>risk</em> allocation, or whether the huge volatility
+  gap between equities/commodities and the bond-like assets means equities and commodities
+  dominate all the risk.
+</div>
+
+<h3>Asset Volatility — The Core Problem</h3>
+<p>
+  The table below explains immediately why equal weighting fails from a risk perspective:
+</p>
+<div class="card">
+  <table>
+    <tr>
+      <th>Asset</th><th>Type</th><th>Monthly σ</th><th>Ann. σ</th>
+      <th>EW Risk Share (approx.)</th><th>Problem?</th>
+    </tr>
+    <tr>
+      <td><strong>Asset 1</strong></td><td>US Bonds</td>
+      <td>0.72%</td><td>2.5%</td>
+      <td style="color:var(--green);">~2%</td>
+      <td>Barely registers in risk</td>
+    </tr>
+    <tr>
+      <td><strong>Asset 2</strong></td><td>US Equity</td>
+      <td>4.24%</td><td>14.7%</td>
+      <td style="color:var(--red);">~46%</td>
+      <td>Dominates risk despite 20% weight</td>
+    </tr>
+    <tr>
+      <td><strong>Asset 3</strong></td><td>Commodities</td>
+      <td>5.93%</td><td>20.5%</td>
+      <td style="color:var(--red);">~57%</td>
+      <td>Single largest risk contributor</td>
+    </tr>
+    <tr>
+      <td><strong>Asset 4</strong></td><td>Hedge Fund</td>
+      <td>1.26%</td><td>4.4%</td>
+      <td style="color:var(--muted);">~7%</td>
+      <td>Small risk share despite 20% weight</td>
+    </tr>
+    <tr>
+      <td><strong>Asset 5</strong></td><td>TIPS</td>
+      <td>1.41%</td><td>4.9%</td>
+      <td style="color:var(--muted);">~8%</td>
+      <td>Small risk share despite 20% weight</td>
+    </tr>
+  </table>
+  <p style="font-size:0.82rem;color:var(--muted);margin-top:6px;">
+    * Approximate shares — exact TRC depends on correlations too. Asset 2 + Asset 3 together
+    account for well over 90% of portfolio risk despite only 40% of the dollars.
+  </p>
+</div>
+
+<div class="chart-wrap">
+  <img src="rp_correlation.png" alt="Asset Correlation Matrix">
+  <div class="chart-caption">
+    <strong>Asset Correlation Matrix (Jan 2004 – Dec 2013).</strong>
+    Notice Asset 1 (bonds) and Asset 5 (TIPS) are highly positively correlated — both are
+    rate-sensitive. Asset 2 (equity) and Asset 3 (commodities) are moderately correlated —
+    both are "risk-on" assets. Asset 4 (hedge fund) has low-to-moderate correlations with
+    everyone, providing some genuine diversification.
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 3 ══════════════ -->
+<h2 id="s3">4 · Key Building Block: Total Risk Contribution (TRC)</h2>
+<p>
+  Every covariance-aware Risk Parity method is built on TRC.
+  Understanding it is the key to reading every output table.
+</p>
+<h3>Portfolio Volatility</h3>
+<div class="formula">σ_P = sqrt( w' Σ w )</div>
+<h3>Total Risk Contribution</h3>
+<div class="formula">TRC_i = w_i · (Σw)_i / σ_P
+
+Sum of all TRC_i = σ_P     ← always true (Euler's homogeneous function theorem)</div>
+<h3>Percentage Risk Contribution (PRC)</h3>
+<div class="formula">PRC_i = TRC_i / σ_P = w_i · (Σw)_i / σ_P²     ← sums to 1 (100%)</div>
+
+<div class="card-row">
+  <div class="card">
+    <h4>Equal Weight: PRC is NOT equal</h4>
+    <p>With 20% in each asset, Asset 2 (equity) and Asset 3 (commodities) each contribute
+    40–50%+ of risk. Asset 1 and 5 (bonds) together contribute less than 10%.
+    Dollar balance ≠ risk balance.</p>
+  </div>
+  <div class="card">
+    <h4>ERC goal: PRC = 20% each</h4>
+    <p>The optimizer finds weights where every PRC_i = 1/N. To get there,
+    Asset 1 and Asset 5 (bonds, TIPS) will receive <em>much larger</em> dollar
+    weights than 20%, while Asset 2 and Asset 3 (equity, commodities) will shrink.</p>
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 4 ══════════════ -->
+<h2 id="s4">5 · The Seven Portfolios</h2>
+
+<!-- Equal Weight -->
+<div class="card" style="border-left:5px solid #9ca3af;">
+  <div class="method-header">
+    <div class="method-stripe stripe-ew"></div>
+    <h3 style="margin:0;">Equal Weight &nbsp;<span class="badge b-ew">Current Portfolio / Benchmark</span></h3>
+  </div>
+  <div class="formula">w_i = 1/N = 20%   for all i</div>
+  <p><strong>What it does:</strong> No optimization. Fixed forever at 20% per asset.</p>
+  <p><strong>Asset lens:</strong> 20% Bonds + 20% Equity + 20% Commodities + 20% Hedge Fund + 20% TIPS.
+     A balanced dollar mix, but equity and commodities dominate risk by a wide margin.</p>
+  <div class="warn"><strong>Client risk problem:</strong> Though it looks balanced, the 40% allocated to
+  Asset 2 + Asset 3 likely accounts for 90%+ of portfolio risk. During the 2008 GFC, these two
+  assets sold off severely — check the drawdown chart to see if EW breached the −15% client limit.</div>
+</div>
+
+<!-- Vol RP -->
+<div class="card" style="border-left:5px solid #3b82f6;">
+  <div class="method-header">
+    <div class="method-stripe stripe-vol"></div>
+    <h3 style="margin:0;">Vol RP &nbsp;<span class="badge b-vol">Naïve 1/σ</span></h3>
+  </div>
+  <div class="formula">w_i = (1/σ_i) / Σ_j(1/σ_j)     σ_i = sqrt(Σ_ii)</div>
+  <p><strong>Asset lens:</strong> Asset 3 (commodities, σ = 5.93%) is ~8× more volatile than
+  Asset 1 (bonds, σ = 0.72%). Vol RP will therefore give Asset 1 roughly <em>eight times</em>
+  the weight of Asset 3. Bonds and TIPS dominate the allocation by dollar weight.
+  No correlation information used — if bonds and TIPS happen to crash together, this offers
+  no protection beyond the volatility signal.</p>
+  <div class="tip"><strong>Expected shape of rolling weights chart:</strong>
+  The two bond-like assets (1 &amp; 5) together should hold 60–70%+ of the portfolio.
+  Asset 2 (equity) and Asset 3 (commodities) should be tiny, single-digit weights.</div>
+</div>
+
+<!-- Covar RP / ERC -->
+<div class="card" style="border-left:5px solid #22c55e;">
+  <div class="method-header">
+    <div class="method-stripe stripe-erc"></div>
+    <h3 style="margin:0;">Covar RP (ERC) &nbsp;<span class="badge b-erc">Equal Risk Contribution</span></h3>
+  </div>
+  <div class="formula">Minimize:  Σ_i (TRC_i − σ_P/N)²
+
+subject to:  Σ w_i = 1,   w_i ≥ 0</div>
+  <p><strong>Asset lens:</strong> Unlike Vol RP, ERC accounts for the fact that Asset 1 (bonds)
+  and Asset 5 (TIPS) are highly correlated (r ≈ 0.79 from the heatmap above). Two correlated assets
+  together contribute <em>more</em> risk than their individual volatilities suggest.
+  ERC will therefore not give Asset 1 and Asset 5 quite as large a combined weight as Vol RP does —
+  it penalizes their correlation and balances the risk more carefully across all five assets.</p>
+  <div class="tip"><strong>Check the TRC heatmap:</strong> If ERC worked, every cell in the Covar RP row
+  of the heatmap should be close to 20%.</div>
+</div>
+
+<!-- MDP -->
+<div class="card" style="border-left:5px solid #f97316;">
+  <div class="method-header">
+    <div class="method-stripe stripe-mdp"></div>
+    <h3 style="margin:0;">MDP &nbsp;<span class="badge b-mdp">Maximum Diversification Portfolio</span></h3>
+  </div>
+  <div class="formula">Maximize:  DR_P = (Σ_i w_i σ_i) / σ_P
+
+subject to:  Σ w_i = 1,   w_i ≥ 0</div>
+  <p><strong>Asset lens:</strong> MDP rewards assets that are volatile on their own but
+  weakly correlated with everyone else — assets that provide "free" diversification.
+  Asset 4 (hedge fund) has the lowest correlations with the other four assets (r ≈ 0.3–0.5).
+  MDP may give Asset 4 a larger-than-expected weight because it "earns its keep" through
+  diversification, even though its volatility is modest.
+  The Diversification Ratio (DR) in the final snapshot table shows how much correlation
+  reduction the portfolio achieves — MDP will always have the highest DR by construction.</p>
+  <div class="warn"><strong>GFC risk:</strong> In 2008, correlations across all risk assets spiked.
+  The correlation structure MDP was optimized for broke down. Check the drawdown chart —
+  MDP often underperforms in crises precisely because it relied on correlations remaining stable.</div>
+</div>
+
+<!-- HRP -->
+<div class="card" style="border-left:5px solid #a855f7;">
+  <div class="method-header">
+    <div class="method-stripe stripe-hrp"></div>
+    <h3 style="margin:0;">HRP &nbsp;<span class="badge b-hrp">Hierarchical Risk Parity</span></h3>
+  </div>
+  <ol style="margin-top:8px;">
+    <li><strong>Distance matrix:</strong> <code>d_ij = sqrt(0.5 · (1 − ρ_ij))</code> — correlated assets are "close."</li>
+    <li><strong>Cluster:</strong> Build a dendrogram (tree) by merging the two closest pairs repeatedly.</li>
+    <li><strong>Bisect:</strong> Allocate capital recursively, splitting proportional to inverse cluster variance.</li>
+  </ol>
+  <p><strong>Asset lens:</strong> The clustering step will discover two obvious groups
+  from the correlation matrix: a <em>rates cluster</em> (Asset 1 + Asset 5, both bond-like, r ≈ 0.79)
+  and a <em>risk-on cluster</em> (Asset 2 + Asset 3, both positively correlated and risk-sensitive).
+  Asset 4 (hedge fund, lowest correlations) will form its own cluster or attach last.
+  Within each cluster, assets compete for weight. Then the clusters compete against each other.
+  This means Asset 1 and Asset 5 <em>share</em> a risk budget — they don't each independently
+  draw from the full portfolio risk budget as they might in Vol RP or ERC.</p>
+  <div class="tip"><strong>Key advantage:</strong> No matrix inversion needed. Robust to highly
+  correlated assets. When correlations spike in a crisis, the cluster structure adapts more
+  gracefully than a direct optimizer.</div>
+</div>
+
+<!-- Factor ERC -->
+<div class="card" style="border-left:5px solid #e11d48;">
+  <div class="method-header">
+    <div class="method-stripe stripe-ferc"></div>
+    <h3 style="margin:0;">Factor ERC &nbsp;<span class="badge b-ferc">Kalman Factor-Implied Covariance</span></h3>
+  </div>
+  <div class="formula">Σ_implied = B · Σ_F · B'  +  Σ_ε
+
+B[i,k] = Kalman-smoothed beta of asset i on factor k (time-varying)
+Σ_F    = rolling 36m covariance of factor returns
+Σ_ε    = diag(idiosyncratic variances)</div>
+  <p><strong>Why this matters for our specific assets:</strong> The five assets share some
+  common factors — particularly <em>High Yield</em> (all 5 assets include it as a cross-risk factor)
+  and <em>MSCI EM Equity</em> (Assets 3, 4, 5). A standard covariance matrix from raw returns
+  mixes all these overlaps together and is estimated with only 36 data points.
+  The factor model decomposes it cleanly: "how much of Asset 3's risk comes from the commodities
+  factor vs. EM equity vs. the credit spread?" Then it equalizes <em>factor</em>-level risk.</p>
+  <p><strong>Asset-level factor assignments:</strong></p>
+  <div class="card" style="padding:12px;margin-top:0;">
+    <table>
+      <tr>
+        <th>Asset</th><th>Identity</th><th>Home Factor</th><th>Cross-Risk Factors</th>
+      </tr>
+      <tr>
+        <td>Asset 1</td><td><span class="badge b-bond">US Bonds</span></td>
+        <td>US AGG (r=0.892)</td>
+        <td>US Small Cap, High Yield, HF FOF Div, Gold</td>
+      </tr>
+      <tr>
+        <td>Asset 2</td><td><span class="badge b-eq">US Equity</span></td>
+        <td>US Growth (r=0.936)</td>
+        <td>US T-bill 1-3yr, High Yield, Long Short HF, Commodities</td>
+      </tr>
+      <tr>
+        <td>Asset 3</td><td><span class="badge b-comm">Commodities</span></td>
+        <td>Commodities (r=0.708)</td>
+        <td>MSCI EM Equity, Global AGG, High Yield, Long Short HF</td>
+      </tr>
+      <tr>
+        <td>Asset 4</td><td><span class="badge b-alt">Hedge Fund</span></td>
+        <td>HF FOF Div (r=0.583)</td>
+        <td>MSCI EM Equity, Global AGG, High Yield, Commodities</td>
+      </tr>
+      <tr>
+        <td>Asset 5</td><td><span class="badge b-tips">TIPS</span></td>
+        <td>TIPs (r=0.973)</td>
+        <td>MSCI EM Equity, US AGG, High Yield, Relative Value HF</td>
+      </tr>
+    </table>
+  </div>
+  <div class="note">
+    <strong>The Kalman filter makes betas time-varying.</strong> During the 2008 GFC, Asset 4
+    (hedge fund) likely increased its equity-like beta as forced deleveraging made all risk
+    assets move together. A static OLS beta would miss this — Kalman catches it, meaning
+    Factor ERC will have naturally reduced exposure to that asset during the stress period.
+  </div>
+</div>
+
+<!-- 60/40 -->
+<div class="card" style="border-left:5px solid #334155;">
+  <div class="method-header">
+    <div class="method-stripe stripe-6040"></div>
+    <h3 style="margin:0;">60/40 &nbsp;<span class="badge b-6040">Market Benchmark</span></h3>
+  </div>
+  <div class="formula">r_60/40,t = 0.60 × r_MSCI_World,t  +  0.40 × r_Global_AGG,t</div>
+  <p><strong>What it is:</strong> The classic institutional portfolio — 60% global equity (MSCI World
+  index return), 40% global bonds (Global AGG index return). This is what the Risk Parity
+  literature is explicitly trying to improve upon. Class 5-3 Slide 15 specifies it as the
+  benchmark for comparison.</p>
+  <p><strong>Important distinction:</strong> The 60/40 here uses the actual MSCI World and Global AGG
+  <em>index returns</em> from the factors sheet — not any of the five client assets. It's a
+  pure market benchmark. In the charts it appears as a <strong>dotted line</strong>.</p>
+</div>
+
+
+<!-- ══════════════ SECTION 5 ══════════════ -->
+<h2 id="s5">6 · How the Rolling Window Works</h2>
+<ul class="steps">
+  <li>
+    <strong>Month t = 36 (Dec 2006):</strong> Collect the 36 monthly returns from Jan 2004 to Dec 2006.
+    Compute the 5×5 covariance matrix (population, ddof=0). Run each RP optimizer.
+    Record weights <strong>w(36)</strong>.
+  </li>
+  <li>
+    <strong>Apply forward:</strong> Weights from month t are applied to month t+1 returns.
+    This one-month lag is intentional — you can't rebalance before you've seen the data.
+    December 2006 weights → January 2007 return.
+  </li>
+  <li>
+    <strong>Roll forward:</strong> At t = 37, use Feb 2004 – Jan 2007. New covariance, new weights.
+    Repeat through t = 120 (Dec 2013).
+  </li>
+  <li>
+    <strong>Result:</strong> 84 monthly portfolio returns (Jan 2007 – Dec 2013).
+    The first 36 months are "burned" for initialization — this is standard practice.
+  </li>
+</ul>
+<div class="card-row three">
+  <div class="card" style="text-align:center;">
+    <h4>Estimation Window</h4>
+    <p style="font-size:1.4rem;font-weight:700;color:var(--accent);">36 months</p>
+    <p>Jan 2004 → Dec 2006 (first)</p>
+  </div>
+  <div class="card" style="text-align:center;">
+    <h4>Backtest Window</h4>
+    <p style="font-size:1.4rem;font-weight:700;color:var(--accent);">84 months</p>
+    <p>Jan 2007 → Dec 2013</p>
+  </div>
+  <div class="card" style="text-align:center;">
+    <h4>Rebalancing</h4>
+    <p style="font-size:1.4rem;font-weight:700;color:var(--accent);">Monthly</p>
+    <p>New weights every month, one-month lag</p>
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 6 ══════════════ -->
+<h2 id="s6">7 · Output: Performance Tables</h2>
+
+<h3>Backtest Performance Summary</h3>
+<div class="card">
+  <table>
+    <tr><th>Column</th><th>Formula</th><th>What "good" looks like for this client</th></tr>
+    <tr><td><strong>Ann. Return</strong></td><td>Mean monthly × 12</td>
+        <td>Client needs enough return to reach $23M by age 62 (~4-5% required)</td></tr>
+    <tr><td><strong>Ann. Vol</strong></td><td>Std dev monthly × √12</td>
+        <td>Lower is better — but too low means too little return</td></tr>
+    <tr><td><strong>Sharpe</strong></td><td>(Return − Cash) / Vol</td>
+        <td>Higher = better risk-adjusted return. Main comparison metric</td></tr>
+    <tr><td><strong>Max DD</strong></td><td>Worst peak-to-trough</td>
+        <td><span style="color:var(--red);font-weight:600;">Must stay above −15%.</span> Client's stated hard limit</td></tr>
+    <tr><td><strong>Calmar</strong></td><td>Ann. Return / |Max DD|</td>
+        <td>Higher = better return per unit of worst-case loss</td></tr>
+    <tr><td><strong>Min Month</strong></td><td>Worst single month</td>
+        <td>Tail risk check — look for Sep/Oct 2008</td></tr>
+    <tr><td><strong>Max Month</strong></td><td>Best single month</td>
+        <td>Upside capture</td></tr>
+  </table>
+</div>
+
+<h3>Tracking Error Table</h3>
+<div class="card">
+  <table>
+    <tr><th>Column</th><th>Formula</th><th>Interpretation</th></tr>
+    <tr><td><strong>TE (ann.)</strong></td>
+        <td>Std dev(r_method − r_EW) × √12</td>
+        <td>How differently the method behaves from the current portfolio. High TE = big behavior change — needs explanation to the client</td></tr>
+    <tr><td><strong>Info Ratio</strong></td>
+        <td>Active return / TE</td>
+        <td>Positive = method outperformed EW per unit of deviation. This is required for the Page 5 RP Proposal</td></tr>
+  </table>
+</div>
+
+
+<!-- ══════════════ SECTION 7 ══════════════ -->
+<h2 id="s7">8 · Output: Charts</h2>
+
+<h3>Rolling Portfolio Weights <span class="tag">rp-weights-plot</span></h3>
+<p>Five stacked area charts showing how dollar allocations shift every month across the backtest window (Jan 2007 – Dec 2013).
+Each color is one asset. The black dashed line = 20% equal weight reference.
+The x-axis displays calendar dates — major ticks at January of each year, minor ticks each month.</p>
+<div class="chart-wrap">
+  <img src="rp_rolling_weights.png" alt="Rolling Portfolio Weights">
+  <div class="chart-caption">
+    <strong>Rolling 36-Month Portfolio Weights by Method · Jan 2007 – Dec 2013.</strong>
+    X-axis: date (year labels at each January). Y-axis: portfolio weight (%).
+    Vol RP and Covar RP should show heavy allocations to Asset 1 (bonds) and Asset 5 (TIPS) —
+    the two low-volatility assets — while equity (Asset 2) and commodities (Asset 3) shrink to
+    single digits. MDP and HRP will show more nuanced patterns driven by the correlation structure.
+    Factor ERC weights will shift more dramatically over time as the Kalman betas evolve.
+  </div>
+</div>
+
+<h3>Cumulative Return &amp; Drawdown <span class="tag">rp-cumret</span></h3>
+<div class="chart-wrap">
+  <img src="rp_backtest.png" alt="Backtest Cumulative Return and Drawdown">
+  <div class="chart-caption">
+    <strong>Left: Cumulative total return indexed to 100 at Jan 2007.
+    Right: Drawdown from peak (red dotted line = −15% client limit).</strong><br>
+    Key moments to read: (1) The GFC selloff (Sep 2008–Mar 2009) — how deep does each method fall?
+    The RP methods should show shallower drawdowns than 60/40 and Equal Weight because they have
+    smaller allocations to the high-vol, high-correlation assets (equity, commodities) that
+    crashed hardest. (2) The recovery (2009–2013) — RP methods may lag in a straight-up equity
+    bull market since they deliberately underweight equities.
+    Solid lines = RP methods; dashed = Equal Weight; dotted = 60/40.
+  </div>
+</div>
+
+<h3>Rolling TRC Analysis <span class="tag">rp-rolling-trc</span></h3>
+<div class="chart-wrap">
+  <img src="rp_rolling_trc.png" alt="Rolling Percentage Risk Contribution">
+  <div class="chart-caption">
+    <strong>Rolling % Risk Contribution by asset for Equal Weight, Covar RP, and MDP.</strong>
+    Each line shows one asset's share of total portfolio risk over time.
+    The 20% dashed line = equal risk target.
+    For Equal Weight: expect Asset 2 (equity) and Asset 3 (commodities) to sit far above 20%,
+    with bonds and TIPS barely visible — confirming the concentration problem.
+    For Covar RP: lines should cluster around 20%, especially outside of crisis periods.
+    Lines below zero mean that asset is actually <em>reducing</em> portfolio risk (negative covariance
+    with the rest) — this can happen for bonds during equity selloffs.
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 8 ══════════════ -->
+<h2 id="s8">9 · Output: TRC &amp; Factor TRC</h2>
+
+<h3>Asset-Level % Risk Contribution <span class="tag">rp-trc</span></h3>
+<div class="chart-wrap">
+  <img src="rp_trc_bar.png" alt="Percentage Risk Contribution Stacked Bar">
+  <div class="chart-caption">
+    <strong>% Risk Contribution by asset, using time-averaged weights.</strong>
+    Each bar = one portfolio method. Each color = one asset's share of risk.
+    The black dashed line at 20% is the equal-risk ideal.
+    Covar RP should come closest to all segments touching 20%.
+    Equal Weight and 60/40 will show Asset 2/3 dominating.
+  </div>
+</div>
+<div class="chart-wrap">
+  <img src="rp_trc_heatmap.png" alt="Risk Contribution Heatmap">
+  <div class="chart-caption">
+    <strong>Same data as a heatmap.</strong>
+    Darker red = higher risk concentration in that (method, asset) cell.
+    A perfectly equal-risk portfolio would show uniform color across all cells.
+    Use this to spot which asset is the stubborn risk concentrator for each method.
+  </div>
+</div>
+
+<h3>Factor-Level % Risk Contribution <span class="tag">rp-ftrc</span></h3>
+<p>
+  Breaks portfolio risk into contributions from the 12 union factors (from the
+  Kalman model) plus idiosyncratic (unexplained) variance.
+</p>
+<div class="formula">Portfolio factor exposure:  b_P,k = Σ_i w_i · β_i,k
+
+Factor TRC:  FTRC_k = b_P,k · (Σ_F b_P)_k / σ_P_sys
+
+Idiosyncratic share = Σ_i w_i² σ²_ε,i / σ²_P</div>
+<div class="chart-wrap">
+  <img src="rp_factor_trc.png" alt="Factor-Level Risk Contribution">
+  <div class="chart-caption">
+    <strong>Factor-level % risk contribution by portfolio method.</strong>
+    "Idiosyncratic" (rightmost segment) is the share not explained by any factor.
+    The key question: does Factor ERC show the most balanced distribution across factors?
+    Watch for <em>High Yield</em> (credit risk) — it appears in all five asset models
+    as a cross-risk factor, so it may dominate risk across all methods regardless of
+    how the weights are set. If so, the portfolio has a latent credit risk concentration
+    regardless of which RP variant you pick.
+  </div>
+</div>
+
+
+<!-- ══════════════ SECTION 9 ══════════════ -->
+<h2 id="s9">10 · Output: End-of-Sample Snapshot</h2>
+
+<div class="chart-wrap">
+  <img src="rp_final_weights.png" alt="End-of-Sample Proposed Weights">
+  <div class="chart-caption">
+    <strong>Proposed portfolio weights by method, using the last 36 months (Jan 2011 – Dec 2013).</strong>
+    This is the forward-looking allocation you would actually implement for the client.
+    The black dashed line = 20% equal weight reference.
+    One cluster of bars per asset — compare heights across methods to see where they disagree.
+    Expect Vol RP and Covar RP to heavily overweight Asset 1 (bonds) and Asset 5 (TIPS).
+    HRP may be more balanced due to the cluster structure. MDP will likely have the
+    highest Diversification Ratio in the snapshot table.
+  </div>
+</div>
+
+<h3>Risk/Return Profile Table (end-of-sample)</h3>
+<div class="card">
+  <table>
+    <tr><th>Column</th><th>Formula</th><th>Note</th></tr>
+    <tr><td><strong>Ann. Return (est.)</strong></td>
+        <td>w' × mean(last 36 returns) × 12</td>
+        <td>Not a forecast — estimated from recent history. Compare to backtest return for consistency</td></tr>
+    <tr><td><strong>Ann. Vol (est.)</strong></td>
+        <td>√(w' Σ_last36 w) × √12</td>
+        <td>Ex-ante vol from the last 36m covariance — what the optimizer "sees"</td></tr>
+    <tr><td><strong>Sharpe (est.)</strong></td>
+        <td>(Return − rf) / Vol</td>
+        <td>Forward-looking estimate</td></tr>
+    <tr><td><strong>Div. Ratio</strong></td>
+        <td>(w'σ) / σ_P</td>
+        <td>MDP maximizes this by construction. Higher = more free diversification captured</td></tr>
+    <tr><td><strong>TE to EW (est.)</strong></td>
+        <td>√((w−w_EW)' Σ (w−w_EW)) × √12</td>
+        <td><strong>Required by project Page 5.</strong> How different the proposed portfolio is from what the client currently holds. Use this to frame the magnitude of the recommended change</td></tr>
+  </table>
+</div>
+
+
+<!-- ══════════════ SECTION 10 ══════════════ -->
+<h2 id="s10">11 · What to Take from This for the Presentation</h2>
+
+<div class="card-row">
+  <div class="card" style="border-top:4px solid var(--accent);">
+    <h4>Page 3 · Current Portfolio Risk</h4>
+    <ul>
+      <li>Show TRC heatmap: despite 20% weights, Asset 2 (equity) and Asset 3 (commodities) dominate risk</li>
+      <li>Show drawdown chart: does EW breach the −15% client limit in 2008?</li>
+      <li>Show factor TRC for Equal Weight: the credit factor (High Yield) likely runs through everything</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:4px solid #22c55e;">
+    <h4>Page 5 · RP Proposal</h4>
+    <ul>
+      <li>State the chosen method with its objective function</li>
+      <li>Show end-of-sample weights table — highlight that bonds/TIPS get ~50–60%+ of the dollars</li>
+      <li>Show the PRC table: risk is now actually balanced at ~20% per asset</li>
+      <li>Report: Ann. Vol, Sharpe, Max DD, Div. Ratio, <strong>TE to current</strong></li>
+    </ul>
+  </div>
+</div>
+<div class="card-row">
+  <div class="card" style="border-top:4px solid #f97316;">
+    <h4>Page 6 · Historical Simulation</h4>
+    <ul>
+      <li>Use the cumulative return chart — base = 100, Jan 2007</li>
+      <li>Highlight GFC: RP methods should show shallower drawdowns than 60/40</li>
+      <li>Note: data starts 2004 vs. project's requested 2001 — acknowledge the gap</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:4px solid #a855f7;">
+    <h4>Which Method to Recommend?</h4>
+    <ul>
+      <li><strong>Covar RP (ERC)</strong> — academic standard, guaranteed equal PRC, easiest to explain</li>
+      <li><strong>HRP</strong> — most robust, no matrix inversion, handles the bond/TIPS correlation gracefully</li>
+      <li><strong>Factor ERC</strong> — tells the most complete story across pages 2, 3 &amp; 5; connects the Kalman analysis to the portfolio proposal</li>
+    </ul>
+  </div>
+</div>
+
+<div class="tip">
+  <strong>The key narrative for the client:</strong> Under equal weighting, Asset 2 (US equity)
+  and Asset 3 (commodities) are consuming 90%+ of the risk budget despite representing only 40%
+  of the dollars. Both sold off sharply in 2008. Risk Parity rebalances the risk budget — the
+  two bond-like assets (Asset 1 and Asset 5) are underweighted in dollar terms relative to what
+  their risk contribution demands. Increasing bond/TIPS weight and reducing equity/commodities
+  weight is the mechanism by which all RP methods improve the drawdown profile.
+</div>
+
+<hr class="divider">
+<p style="color:var(--muted);font-size:0.82rem;text-align:center;">
+  QFGB 8948 · Team Portfolio Project · Risk Parity Explainer ·
+  Generated from <code>Risk_Parity.ipynb</code> + <code>kalman_factor_model_v2.ipynb</code>
+</p>
+
+</div>
+</body>
+</html>
