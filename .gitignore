@@ -1,0 +1,17 @@
+# Python environment
+bin/
+include/
+lib/
+share/
+pyvenv.cfg
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Jupyter caches
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
